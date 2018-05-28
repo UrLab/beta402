@@ -113,34 +113,7 @@
     </div>
     <div class="row full-width collapse" data-equalizer>
       {% block full-page %}
-        <div class="hide-for-small-only large-2 medium-3 columns sidebar" data-equalizer-watch>
-          <ul class="side-nav main-side-nav">
-            <li>
-              <a href="/" class="sidebar-button">
-                <i class="fi-list-thumbnails"></i> Flux d'actualités
-              </a>
-            </li>
-            {% if request.user.following_courses|length == 0 %}
-              <li>
-                <a href="{% url 'show_courses' %}" class="sidebar-button" id="joy-abonner">S'abonner à des cours
-                </a>
-              </li>
-            {% else %}
-              <li>
-                <a href="{% url 'show_courses' %}" class="sidebar-button" id="joy-abonner"><i class="fi-book"></i> Mes cours</a>
-              </li>
-            {% endif %}
-            <ul class="course-bulletlist">
-              {% for course in request.user.following_courses %}
-                <li class="nav-link">
-                  <a href="{% url 'course_show' course.slug %}">
-                    <i class="fi-folder"></i> {{ course.name }}
-                  </a>
-                  </li>
-              {% endfor %}
-            </ul>
-          </ul>
-
+        <div id="side-tree-menu" class="hide-for-small-only large-2 medium-3 columns sidebar" data-equalizer-watch>
         </div>
         <div class="large-10 medium-9 columns" data-equalizer-watch>
           {% block content %}
@@ -173,8 +146,16 @@
         $(document).foundation();
 
         // Rendering react.
-        $.get(Urls.course_tree(), function (data) {
-            courseTreeRender(data);
+        $.get(Urls.course_tree(), function (whole_tree) {
+            $.get(Urls.users_me_list(), function (data_me){
+                var my_courses = [{
+                    'children': [],
+                    'courses': data_me['followed_courses'],
+                    'id': 'u' + data_me['id'],
+                    'name': "Mes cours"
+                }];
+                courseTreeRender(my_courses.concat(whole_tree));
+            });
             $(document).foundation('topbar', 'reflow');
         });
       });
@@ -190,62 +171,64 @@
       src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
     </script>
 
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-89986937-2"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+    {% if not settings.DEBUG %}
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-89986937-2"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
 
-      {% if request.user.is_authenticated %}
-          gtag('config', 'UA-89986937-2', {
-            'user_id': '{{ request.user.id }}',
-            'custom_map': {
-                'dimension1': 'inscription_faculty',
-                'dimension2': 'inferred_faculty',
-            },
-          });
-          gtag('event', 'page_view', {
-              'inscription_faculty': '{{request.user.inscription_faculty}}',
-              'inferred_faculty': '{{request.user.inferred_faculty}}',
-          });
-      {% else %}
-          gtag('config', 'UA-89986937-2');
-      {% endif %}
-    </script>
-    <!-- Start of Async Drift Code -->
-    <script>
-    !function() {
-      var t;
-      if (t = window.driftt = window.drift = window.driftt || [], !t.init) return t.invoked ? void (window.console && console.error && console.error("Drift snippet included twice.")) : (t.invoked = !0,
-      t.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ],
-      t.factory = function(e) {
-        return function() {
-          var n;
-          return n = Array.prototype.slice.call(arguments), n.unshift(e), t.push(n), t;
-        };
-      }, t.methods.forEach(function(e) {
-        t[e] = t.factory(e);
-      }), t.load = function(t) {
-        var e, n, o, i;
-        e = 3e5, i = Math.ceil(new Date() / e) * e, o = document.createElement("script"),
-        o.type = "text/javascript", o.async = !0, o.crossorigin = "anonymous", o.src = "https://js.driftt.com/include/" + i + "/" + t + ".js",
-        n = document.getElementsByTagName("script")[0], n.parentNode.insertBefore(o, n);
-      });
-    }();
-    drift.SNIPPET_VERSION = '0.3.1';
-    drift.load('dzkrmavg2zw3');
-    </script>
-    <!-- End of Async Drift Code -->
-    <script>
-        drift.identify(
-            {{request.user.id}},
-            {
-                email:'{{request.user.email}}',
-                startDate: '{{request.user.created|date:"U"}}000',
-                inferred_faculty: '{{request.user.inferred_faculty}}',
-                inscription_faculty: '{{request.user.inscription_faculty}}',
-            }
-        );
-    </script>
+        {% if request.user.is_authenticated %}
+            gtag('config', 'UA-89986937-2', {
+              'user_id': '{{ request.user.id }}',
+              'custom_map': {
+                  'dimension1': 'inscription_faculty',
+                  'dimension2': 'inferred_faculty',
+              },
+            });
+            gtag('event', 'page_view', {
+                'inscription_faculty': '{{request.user.inscription_faculty}}',
+                'inferred_faculty': '{{request.user.inferred_faculty}}',
+            });
+        {% else %}
+            gtag('config', 'UA-89986937-2');
+        {% endif %}
+      </script>
+      <!-- Start of Async Drift Code -->
+      <script>
+      !function() {
+        var t;
+        if (t = window.driftt = window.drift = window.driftt || [], !t.init) return t.invoked ? void (window.console && console.error && console.error("Drift snippet included twice.")) : (t.invoked = !0,
+        t.methods = [ "identify", "config", "track", "reset", "debug", "show", "ping", "page", "hide", "off", "on" ],
+        t.factory = function(e) {
+          return function() {
+            var n;
+            return n = Array.prototype.slice.call(arguments), n.unshift(e), t.push(n), t;
+          };
+        }, t.methods.forEach(function(e) {
+          t[e] = t.factory(e);
+        }), t.load = function(t) {
+          var e, n, o, i;
+          e = 3e5, i = Math.ceil(new Date() / e) * e, o = document.createElement("script"),
+          o.type = "text/javascript", o.async = !0, o.crossorigin = "anonymous", o.src = "https://js.driftt.com/include/" + i + "/" + t + ".js",
+          n = document.getElementsByTagName("script")[0], n.parentNode.insertBefore(o, n);
+        });
+      }();
+      drift.SNIPPET_VERSION = '0.3.1';
+      drift.load('dzkrmavg2zw3');
+      </script>
+      <!-- End of Async Drift Code -->
+      <script>
+          drift.identify(
+              {{request.user.id}},
+              {
+                  email:'{{request.user.email}}',
+                  startDate: '{{request.user.created|date:"U"}}000',
+                  inferred_faculty: '{{request.user.inferred_faculty}}',
+                  inscription_faculty: '{{request.user.inscription_faculty}}',
+              }
+          );
+      </script>
+    {% endif %}
   </body>
 </html>
