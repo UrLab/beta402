@@ -1,12 +1,11 @@
 const React = require('react');
 const ReactDOM = require('react-dom');
 const Menu = require('./menu.js');
+const SideTree = require('./sidetree.js');
 
-document.addEventListener("DOMContentLoaded",function(){
-    window.courseTreeRender = (data) => {
-        ReactDOM.render(
-            <Menu {...data[0]}/>,
-            document.getElementById('course-tree-menu')
-        );
-    };
-})
+window.courseTreeRender = (data) => {
+    ReactDOM.render(
+        <SideTree content={data[0].children}/>,
+        document.getElementById('side-tree-menu')
+    );
+};

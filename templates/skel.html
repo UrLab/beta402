@@ -63,13 +63,24 @@
     {% endblock %}
   </head>
   <body>
-    {% include "navbar.html" %}
     {% block full-page %}
-    <div class="row">
-          {% block content %}
-          {% endblock %}
-    </div>
+        <div class="off-canvas-wrap" data-offcanvas>
+          <div class="inner-wrap">
+
+            {% include "navbar.html" %}
+
+            <aside class="left-off-canvas-menu">
+              <div style="margin-left: 10px" id="side-tree-menu"></div>
+            </aside>
+
+            {% block content %}
+            {% endblock %}
+
+            <a class="exit-off-canvas"></a>
+          </div>
+        </div>
     {% endblock %}
+
     <footer class="text-center">
       <br>
       Made with love at

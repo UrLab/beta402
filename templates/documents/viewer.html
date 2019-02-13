@@ -10,6 +10,8 @@
 {% block title %}{{ document.name }}{% endblock %}
 {% block full-page %}
 
+{% include "navbar.html" %}
+
 <span id="document_data"
         data-url="{% url 'document-pdf' document.pk %}"
         data-name="{{document.name}}"
