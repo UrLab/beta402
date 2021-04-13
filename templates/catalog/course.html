@@ -1,5 +1,4 @@
 {% extends "skel.html" %}
-{% load render_bundle from webpack_loader %}
 
 {% load humanize %}
 {% load custommardown %}
@@ -9,7 +8,6 @@
 {% block title %}{{ course.slug|upper }}{% endblock %}
 
 {% block header %}
-{% render_bundle 'courses' %}
 {% endblock %}
 
 {% block content %}
@@ -25,7 +23,7 @@
       {% endif %}
     </h1>
     <div >
-        <a href="{{ course.gehol_url }}" target="_blank" class="button radius tiny secondary right">
+        <a href="{{ course.gehol_url }}" target="_blank" rel="noopener" class="button radius tiny secondary right">
             <i class="fi-calendar"></i>
             Horaire sur GeHol
         </a>
@@ -52,22 +50,90 @@
 <div class="row">
     <div class="large-12 medium-12 columns">
       <div class="tabs-content">
-        <div class="content active" id="documents" data-id="{{ course.slug }}">
-            Chargement en cours...
+        <div class="content active" id="documents" data-controller="course-filter">
+          <div>
+             <div class="row course-top">
+                <div class="column small-7">
+                   <h4>Filtrer <small>par tag</small></h4>
+                    {% for tag in tags %}
+                      <label for="{{tag.name}}"
+                        class="radius label tag-item selectionable"
+                        style="border: 2px solid {{tag.color}}; background-color: {{tag.color}}; color: white;"
+                      >
+                        <input
+                          type="checkbox"
+                          id="{{tag.name}}"
+                          data-tag-name="{{tag.name}}"
+                          data-action="input->course-filter#filter"
+                          data-course-filter-target="tag"
+                        > {{tag.name}}
+                      </label>
+                    {% endfor %}
+                </div>
+                <div class="column small-5">
+                   <h4>Chercher <small>dans le titre</small></h4>
+                   <input data-course-filter-target="query"
+                      data-action="input->course-filter#filter"
+                      type="text"
+                    />
+                </div>
+             </div>
+             <br>
+             {% for document in documents %}
+             <div
+              class="row course-document"
+              data-course-filter-target="filterable"
+              data-filter-key='{{document.name}}'
+              data-tags="{{document.tags.all|join:' '}}"
+             >
+                <div class="large-12 columns">
+                   <div class="panel">
+                      <div class="right">
+                        <a href="/api/documents/{{document.pk}}/pdf/" title="Télécharger" class="radius label tiny secondary"><i class="fi-download dark-grey"></i> Télécharger</a>
+                        <a href="{% url 'document_edit' document.pk %}" title="Éditer" class="radius label tiny secondary"><i class="fi-pencil dark-grey"></i> Editer</a>
+                        <a href="{% url 'document_reupload' document.pk %}" class="radius label tiny secondary"><i class="fi-page-add dark-grey" title="Ré-uploader"></i> Ré-uploader</a></div>
+                      <h5><a href="{% url 'document_show' document.pk %}">{{document.name}}</a><small> par {{ document.user.name }}</small><br></h5>
+                      {% if document.description %}
+                        <p class="document-description">{{ document.description|truncatechars:200 }}</p>
+                      {% endif %}
+                      <turbo-frame id="document-{{document.pk}}-vote">
+                        <form action="{% url 'document_vote' document.pk %}" method="POST">
+                          {% csrf_token %}
+                          <div class="right">
+                            <i class="fi-star vote-color"></i> Votez : &nbsp;
+                            <button type="submit" name="vote_type" value="up" title="Ce document est très utile et mérite plus d'attention" class="label radius secondary">
+                              <i class="fi-like round-icon medium upvote "></i>&nbsp;{{document.upvotes}}
+                            </button>
+                            <button type="submit" name="vote_type" value="down" title="Ce document est décevant et/ou inintéressant pour le cours" class="label radius secondary">
+                              <i class="fi-dislike round-icon medium downvote "></i>&nbsp;{{document.downvotes}}
+                            </button>
+                          </div>
+                          </form>
+                      </turbo-frame>
+                      <div class="course-content-last-line">
+                        <i class="fi-page-filled"></i>  {{ document.pages }} page{{ document.pages|pluralize }}
+                        <i class="fi-clock"></i> Uploadé le {{ document.date|date:"d F Y" }}
+                        {% if document.tags.all %}<i class="fi-pricetag-multiple"></i> {% endif %}
+                        {% for kw in document.tags.all%}
+                          <span data-id="{{kw.id}}"
+                             style="background-color: {{kw.color}}; border: solid 2px {{kw.color}};"
+                             class="radius label tag-item">
+                            {{kw}}
+                          </span>
+                        {% endfor %}
+                      </div>
+                   </div>
+                </div>
+             </div>
+             {% empty %}
+               <h3>Il n’y a encore rien dans ce cours…</h3>
+               <p>Personne n’est encore passé ici on dirait.<br>
+                 Vous pourriez poser une question ou encore uploader un document en cliquant sur les boutons ci-dessus. </p>
+             {% endfor %}
+
+          </div>
         </div>
+      </div>
     </div>
 </div>
-{% endblock %}
-
-
-{% block script %}
-<script type="text/javascript">
-  $(document).ready(function () {
-    var dest = 'documents';
-    var doc_id = $('#' + dest).attr('data-id');
-    $.get(Urls['course-detail'](doc_id), function (data) {
-      loadCourseViewer(dest, data);
-    });
-  })
-</script>
 {% endblock %}
