@@ -136,6 +136,20 @@
                 margin-bottom: 1em;
             }
 
+            html[aria-busy] {
+                border: 3px solid orange;
+            }
+
+            turbo-frame {
+                border: 3px solid red;
+                padding: 15px;
+                transition-property: background-color;
+                transition-duration: 1s;
+            }
+
+            turbo-frame[busy] {
+                background-color: blue;
+            }
 
         </style>
         {% block head %}{% endblock %}
